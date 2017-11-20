@@ -10,8 +10,7 @@ import (
 func New() Injector {
 	return &injector{
 		&sync.RWMutex{},
-		make(map[reflect.Type]reflect.Value),
-		make(map[reflect.Type][]reflect.Type),
+		make(map[reflect.Type]interface{}),
 		make(map[reflect.Type]reflect.Value),
 	}
 }
@@ -19,12 +18,12 @@ func New() Injector {
 type Injector interface {
 	Register(instance interface{}, factory interface{}) error
 	Get(instance interface{}) error
+	InjectFunc(function interface{}) error
 }
 
 type injector struct {
 	*sync.RWMutex
-	factories map[reflect.Type]reflect.Value
-	services  map[reflect.Type][]reflect.Type
+	factories map[reflect.Type]interface{}
 	instances map[reflect.Type]reflect.Value
 }
 
@@ -40,21 +39,14 @@ func (i *injector) get(typ reflect.Type, val reflect.Value) error {
 	}
 	ins, ok := i.instances[typ]
 	if !ok {
-		depTyps, ok := i.services[typ]
+		factory, ok := i.factories[typ]
 		if !ok {
 			return ErrNotRegistered
 		}
-		deps := make([]reflect.Value, 0)
-		for _, depType := range depTyps {
-			dep := reflect.New(depType.Elem())
-			err := i.get(depType, dep)
-			if err != nil {
-				return err
-			}
-			deps = append(deps, dep)
+		vals, err := i.injectFunc(factory)
+		if err != nil {
+			return err
 		}
-		factory := i.factories[typ]
-		vals := factory.Call(deps)
 		if vals[1].Interface() != nil {
 			err := vals[1].Interface().(error)
 			return err
@@ -80,20 +72,52 @@ func (i *injector) Register(instance interface{}, factory interface{}) error {
 		return fmt.Errorf("The second argument has wrong type. It must return (%s, error)", typ.String())
 	}
 
-	depsCount := factoryType.NumIn()
-	deps := make([]reflect.Type, depsCount)
-	for i := 0; i < factoryType.NumIn(); i++ {
-		deps[i] = factoryType.In(i)
-	}
-
 	i.Lock()
 	defer i.Unlock()
-	_, ok := i.services[typ]
+	_, ok := i.factories[typ]
 	if ok {
 		return ErrDuplicate
 	}
-	i.services[typ] = deps
-	i.factories[typ] = reflect.ValueOf(factory)
+	i.factories[typ] = factory
 
 	return nil
+}
+
+func (i *injector) InjectFunc(function interface{}) error {
+	functionType := reflect.TypeOf(function)
+
+	if functionType.Kind() != reflect.Func {
+		return errors.New("The first argument is not a function")
+	}
+	if functionType.NumOut() != 1 {
+		return errors.New("The first argument has wrong type. It must return only 1 value")
+	}
+	if functionType.Out(0).String() != "error" {
+		return errors.New("The second argument has wrong type. It must return error")
+	}
+
+	vals, err := i.injectFunc(function)
+	if err != nil {
+		return err
+	}
+	return vals[0].Interface().(error)
+}
+
+func (i *injector) injectFunc(function interface{}) ([]reflect.Value, error) {
+	functionType := reflect.TypeOf(function)
+	functionValue := reflect.ValueOf(function)
+	depsCount := functionType.NumIn()
+	deps := make([]reflect.Value, depsCount)
+
+	for j := 0; j < depsCount; j++ {
+		paramType := functionType.In(j)
+		param := reflect.New(paramType.Elem())
+		err := i.get(paramType, param)
+		if err != nil {
+			return nil, err
+		}
+		deps[j] = param
+	}
+
+	return functionValue.Call(deps), nil
 }
