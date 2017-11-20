@@ -1,4 +1,7 @@
 di
+[![GoDoc](https://godoc.org/github.com/poying/di?status.svg)](http://godoc.org/github.com/poying/di)
+[![Build](https://travis-ci.org/poying/di.svg?branch=master)](https://travis-ci.org/poying/di)
+[![Coverage](https://codecov.io/gh/poying/di/branch/master/graph/badge.svg)](https://codecov.io/gh/poying/di)
 ==
 
 A really simple di library in about 100 lines of code.
