@@ -23,6 +23,10 @@ di.Register(&Service2{}, func(service1 *Service1) (*Service2, error) {
     return &Service2{service1}
 })
 
+di.InjectF(func (service2 *Service2) error {
+    //...
+})
+
 service2 := &Service2{}
 di.Get(service2)
 ```

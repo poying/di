@@ -6,4 +6,4 @@ var Register = defaultInjector.Register
 
 var Get = defaultInjector.Get
 
-var InjectFunc = defaultInjector.InjectFunc
+var InjectF = defaultInjector.InjectF

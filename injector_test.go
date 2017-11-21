@@ -117,36 +117,36 @@ func TestGet(t *testing.T) {
 	})
 }
 
-func TestInjectFunc(t *testing.T) {
+func TestInjectF(t *testing.T) {
 	t.Run("With non-function argument", func(t *testing.T) {
 		injector := di.New()
-		err := injector.InjectFunc(struct{}{})
+		err := injector.InjectF(struct{}{})
 		assert.NotNil(t, err)
 		assert.EqualError(t, err, "The first argument is not a function")
 	})
 
 	t.Run("With wrong function type", func(t *testing.T) {
 		injector := di.New()
-		err := injector.InjectFunc(func() {})
+		err := injector.InjectF(func() {})
 		assert.NotNil(t, err)
 		assert.EqualError(t, err, "The first argument has wrong type. It must return only 1 value")
 	})
 
 	t.Run("With wrong function type", func(t *testing.T) {
 		injector := di.New()
-		err := injector.InjectFunc(func() int { return 1 })
+		err := injector.InjectF(func() int { return 1 })
 		assert.EqualError(t, err, "The second argument has wrong type. It must return error")
 	})
 
 	t.Run("Depends on non-registered service", func(t *testing.T) {
 		injector := di.New()
-		err := injector.InjectFunc(func(service *Service1) error { return nil })
+		err := injector.InjectF(func(service *Service1) error { return nil })
 		assert.Equal(t, di.ErrNotRegistered, err)
 	})
 
 	t.Run("Depends on non-registered service", func(t *testing.T) {
 		injector := di.New()
-		err := injector.InjectFunc(func() error { return errors.New("~") })
+		err := injector.InjectF(func() error { return errors.New("~") })
 		assert.EqualError(t, err, "~")
 	})
 }

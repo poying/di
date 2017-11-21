@@ -18,7 +18,7 @@ func New() Injector {
 type Injector interface {
 	Register(instance interface{}, factory interface{}) error
 	Get(instance interface{}) error
-	InjectFunc(function interface{}) error
+	InjectF(function interface{}) error
 }
 
 type injector struct {
@@ -83,7 +83,7 @@ func (i *injector) Register(instance interface{}, factory interface{}) error {
 	return nil
 }
 
-func (i *injector) InjectFunc(function interface{}) error {
+func (i *injector) InjectF(function interface{}) error {
 	functionType := reflect.TypeOf(function)
 
 	if functionType.Kind() != reflect.Func {
