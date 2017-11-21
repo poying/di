@@ -16,8 +16,11 @@ type Service2 struct {
 	*Service1
 }
 
-type Service3 struct {
-}
+type Service3 struct{}
+
+type Service4 struct{}
+
+type Service5 struct{}
 
 func TestRegister(t *testing.T) {
 	t.Run("Without deps", func(t *testing.T) {
@@ -90,8 +93,22 @@ func TestGet(t *testing.T) {
 			return &Service2{service1}, nil
 		})
 		assert.Nil(t, err)
+		err = injector.Register(&Service4{}, func(service3 *Service3) (*Service4, error) {
+			return &Service4{}, nil
+		})
+		assert.Nil(t, err)
+		err = injector.Register(&Service5{}, func() (*Service5, error) {
+			return nil, errors.New("~")
+		})
+		assert.Nil(t, err)
 		return injector
 	}
+
+	t.Run("Get non-pointer value", func(t *testing.T) {
+		injector := setup(t)
+		err := injector.Get(Service1{})
+		assert.NotNil(t, err)
+	})
 
 	t.Run("Get registered service", func(t *testing.T) {
 		injector := setup(t)
@@ -109,11 +126,25 @@ func TestGet(t *testing.T) {
 		assert.Equal(t, "poying", service.Name)
 	})
 
+	t.Run("Get registered service which is depends on non-registered service", func(t *testing.T) {
+		injector := setup(t)
+		service := &Service4{}
+		err := injector.Get(service)
+		assert.NotNil(t, err)
+	})
+
 	t.Run("Get not registered service", func(t *testing.T) {
 		injector := setup(t)
 		service := &Service3{}
 		err := injector.Get(service)
 		assert.Equal(t, di.ErrNotRegistered, err)
+	})
+
+	t.Run("When factory function return an error", func(t *testing.T) {
+		injector := setup(t)
+		service := &Service5{}
+		err := injector.Get(service)
+		assert.NotNil(t, err)
 	})
 }
 
