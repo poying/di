@@ -1,2 +1,2 @@
 test:
-	@./_scripts/test.sh
+	@go test -race -timeout=5s -coverprofile=coverage.txt -covermode=atomic ./...
