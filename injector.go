@@ -100,7 +100,10 @@ func (i *injector) InjectF(function interface{}) error {
 	if err != nil {
 		return err
 	}
-	return vals[0].Interface().(error)
+	if vals[0].Interface() != nil {
+		return vals[0].Interface().(error)
+	}
+	return nil
 }
 
 func (i *injector) injectFunc(function interface{}) ([]reflect.Value, error) {

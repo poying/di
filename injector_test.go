@@ -149,6 +149,12 @@ func TestGet(t *testing.T) {
 }
 
 func TestInjectF(t *testing.T) {
+	t.Run("Pass", func(t *testing.T) {
+		injector := di.New()
+		err := injector.InjectF(func() error { return nil })
+		assert.Nil(t, err)
+	})
+
 	t.Run("With non-function argument", func(t *testing.T) {
 		injector := di.New()
 		err := injector.InjectF(struct{}{})
